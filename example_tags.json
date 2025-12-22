@@ -1,0 +1,7 @@
+{
+  "document": ["quarterly_review", "business_metrics"],
+  "slide_1": ["title_slide", "executive_summary"],
+  "slide_2": ["agenda", "overview"],
+  "slide_3": ["financial_data", "revenue"],
+  "slide_4": ["performance_metrics", "kpis"]
+}

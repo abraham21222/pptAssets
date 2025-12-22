@@ -1,0 +1,39 @@
+[debug] [2025-12-22T02:47:40.801Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-22T02:47:40.802Z] > authorizing via signed-in user (abetwopercentclub@gmail.com)
+[debug] [2025-12-22T02:47:40.803Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:40.803Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:40.803Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo [none]
+[debug] [2025-12-22T02:47:40.806Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-22T02:47:40.806Z] > authorizing via signed-in user (abetwopercentclub@gmail.com)
+[debug] [2025-12-22T02:47:40.806Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-22T02:47:40.806Z] > authorizing via signed-in user (abetwopercentclub@gmail.com)
+[debug] [2025-12-22T02:47:40.807Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:40.807Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:40.807Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:40.807Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:40.807Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo [none]
+[debug] [2025-12-22T02:47:40.807Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo [none]
+[debug] [2025-12-22T02:47:41.072Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo 200
+[debug] [2025-12-22T02:47:41.072Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo {"name":"projects/twopercentclub-73117/billingInfo","projectId":"twopercentclub-73117","billingAccountName":"billingAccounts/01DFA6-A58177-527328","billingEnabled":true}
+[debug] [2025-12-22T02:47:41.162Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo 200
+[debug] [2025-12-22T02:47:41.162Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo {"name":"projects/twopercentclub-73117/billingInfo","projectId":"twopercentclub-73117","billingAccountName":"billingAccounts/01DFA6-A58177-527328","billingEnabled":true}
+[debug] [2025-12-22T02:47:41.224Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-22T02:47:41.225Z] > authorizing via signed-in user (abetwopercentclub@gmail.com)
+[debug] [2025-12-22T02:47:41.225Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:41.225Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:41.225Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo [none]
+[debug] [2025-12-22T02:47:41.239Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo 200
+[debug] [2025-12-22T02:47:41.239Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo {"name":"projects/twopercentclub-73117/billingInfo","projectId":"twopercentclub-73117","billingAccountName":"billingAccounts/01DFA6-A58177-527328","billingEnabled":true}
+[debug] [2025-12-22T02:47:41.294Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-22T02:47:41.294Z] > authorizing via signed-in user (abetwopercentclub@gmail.com)
+[debug] [2025-12-22T02:47:41.294Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:41.294Z] Checked if tokens are valid: true, expires at: 1766374235222
+[debug] [2025-12-22T02:47:41.294Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo [none]
+[debug] [2025-12-22T02:47:41.412Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo 200
+[debug] [2025-12-22T02:47:41.412Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo {"name":"projects/twopercentclub-73117/billingInfo","projectId":"twopercentclub-73117","billingAccountName":"billingAccounts/01DFA6-A58177-527328","billingEnabled":true}
+[debug] [2025-12-22T02:47:41.412Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-22T02:47:41.412Z] > authorizing via signed-in user (abetwopercentclub@gmail.com)
+[debug] [2025-12-22T02:47:41.450Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo 200
+[debug] [2025-12-22T02:47:41.450Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/twopercentclub-73117/billingInfo {"name":"projects/twopercentclub-73117/billingInfo","projectId":"twopercentclub-73117","billingAccountName":"billingAccounts/01DFA6-A58177-527328","billingEnabled":true}
+[debug] [2025-12-22T02:47:41.450Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-22T02:47:41.450Z] > authorizing via signed-in user (abetwopercentclub@gmail.com)

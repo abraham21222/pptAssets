@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Asset Library</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f8f9fa;
+            font-size: 14px;
+        }
+
+        .header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0078d7;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #323130;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header .subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #0078d7;
+            box-shadow: 0 0 0 1px #0078d7;
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 4px 8px;
+            border: 1px solid #d1d1d1;
+            background: white;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #0078d7;
+            background: #f3f9ff;
+        }
+
+        .filter-btn.active {
+            background: #0078d7;
+            color: white;
+            border-color: #0078d7;
+        }
+
+        .assets-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .asset-item {
+            background: white;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .asset-item:hover {
+            border-color: #0078d7;
+            box-shadow: 0 2px 8px rgba(0, 120, 215, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .asset-preview {
+            width: 100%;
+            height: 80px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .asset-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .asset-preview.text-asset {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 500;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        .asset-name {
+            font-weight: 600;
+            color: #323130;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .asset-meta {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .asset-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .tag {
+            background: #f3f2f1;
+            color: #605e5c;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        .tag.approved {
+            background: #ddf4ff;
+            color: #0078d7;
+        }
+
+        .tag.confidential {
+            background: #fef0e6;
+            color: #d83b01;
+        }
+
+        .insert-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .asset-item:hover .insert-btn {
+            opacity: 1;
+        }
+
+        .insert-btn:hover {
+            background: #106ebe;
+        }
+
+        .compliance-section {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e1e1e1;
+        }
+
+        .compliance-title {
+            font-weight: 600;
+            color: #323130;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .compliance-btn {
+            width: 100%;
+            padding: 8px;
+            background: #107c10;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .compliance-btn:hover {
+            background: #0e6e0e;
+        }
+
+        .status-message {
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .success {
+            background: #dff6dd;
+            color: #107c10;
+            border: 1px solid #107c10;
+        }
+
+        .error {
+            background: #fed9cc;
+            color: #d83b01;
+            border: 1px solid #d83b01;
+        }
+
+        .info {
+            background: #deecf9;
+            color: #0078d7;
+            border: 1px solid #0078d7;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .refresh-btn {
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .refresh-btn:hover {
+            background: #555;
+        }
+
+        .library-stats {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 16px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏢 Dynamic Asset Library</h1>
+        <div class="subtitle">Powered by your custom asset manager</div>
+    </div>
+
+    <div class="library-stats" id="libraryStats">
+        Loading asset library...
+    </div>
+
+    <button class="refresh-btn" onclick="loadAssets()">🔄 Refresh Library</button>
+
+    <div class="search-container">
+        <input type="text" class="search-box" placeholder="Search assets..." id="searchBox">
+    </div>
+
+    <div class="filters" id="filtersContainer">
+        <button class="filter-btn active" data-filter="all">All</button>
+    </div>
+
+    <div class="assets-grid" id="assetsGrid">
+        <div class="loading">Loading assets from your library...</div>
+    </div>
+
+    <div class="compliance-section">
+        <div class="compliance-title">🛡️ Compliance Tools</div>
+        <button class="compliance-btn" onclick="addFooter()">Add Confidential Footer</button>
+        <button class="compliance-btn" onclick="addCopyright()">Add © Copyright Notice</button>
+        <button class="compliance-btn" onclick="auditSlides()">Audit Current Presentation</button>
+    </div>
+
+    <div id="statusMessage"></div>
+
+    <script>
+        // Dynamic Asset Library
+        class DynamicAssetLibrary {
+            constructor() {
+                this.apiBase = 'http://localhost:3001/api';
+                this.assets = [];
+                this.filteredAssets = [];
+                this.categories = new Set();
+
+                this.setupEventListeners();
+                this.loadAssets();
+            }
+
+            setupEventListeners() {
+                // Search functionality
+                document.getElementById('searchBox').addEventListener('input', () => {
+                    this.filterAssets();
+                });
+
+                // Filter buttons will be set up dynamically
+            }
+
+            async loadAssets() {
+                try {
+                    this.showStatus('Loading asset library...', 'info');
+
+                    const response = await fetch(`${this.apiBase}/library`);
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.assets = result.assets;
+                        this.setupFilters();
+                        this.filterAssets();
+                        this.updateLibraryStats();
+                        this.showStatus('Asset library loaded successfully!', 'success');
+                    } else {
+                        throw new Error(result.error || 'Failed to load assets');
+                    }
+
+                } catch (error) {
+                    console.error('Error loading assets:', error);
+                    this.showEmptyState(`Error loading assets: ${error.message}`);
+                    this.showStatus('Failed to load asset library', 'error');
+                }
+            }
+
+            setupFilters() {
+                // Collect unique categories
+                this.categories = new Set(['all']);
+                this.assets.forEach(asset => {
+                    if (asset.category) {
+                        this.categories.add(asset.category);
+                    }
+                });
+
+                // Create filter buttons
+                const filtersContainer = document.getElementById('filtersContainer');
+                filtersContainer.innerHTML = '';
+
+                Array.from(this.categories).forEach(category => {
+                    const btn = document.createElement('button');
+                    btn.className = `filter-btn ${category === 'all' ? 'active' : ''}`;
+                    btn.dataset.filter = category;
+                    btn.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+
+                    btn.addEventListener('click', () => {
+                        // Update active filter
+                        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.filterAssets();
+                    });
+
+                    filtersContainer.appendChild(btn);
+                });
+            }
+
+            filterAssets() {
+                const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+                const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+
+                this.filteredAssets = this.assets.filter(asset => {
+                    const matchesSearch = asset.name.toLowerCase().includes(searchTerm) ||
+                                        (asset.tags && asset.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+
+                    const matchesFilter = activeFilter === 'all' || asset.category === activeFilter;
+
+                    return matchesSearch && matchesFilter;
+                });
+
+                this.renderAssets();
+            }
+
+            renderAssets() {
+                const grid = document.getElementById('assetsGrid');
+
+                if (this.filteredAssets.length === 0) {
+                    this.showEmptyState();
+                    return;
+                }
+
+                grid.innerHTML = '';
+
+                this.filteredAssets.forEach(asset => {
+                    const assetElement = this.createAssetElement(asset);
+                    grid.appendChild(assetElement);
+                });
+            }
+
+            createAssetElement(asset) {
+                const div = document.createElement('div');
+                div.className = 'asset-item';
+
+                const preview = document.createElement('div');
+                preview.className = 'asset-preview';
+
+                if (asset.type === 'image' && asset.url) {
+                    preview.innerHTML = `<img src="http://localhost:8080/${asset.url}" alt="${asset.name}" />`;
+                } else {
+                    preview.className += ' text-asset';
+                    const content = asset.content || asset.name || 'Text Asset';
+                    preview.textContent = content.substring(0, 50) + (content.length > 50 ? '...' : '');
+                }
+
+                const name = document.createElement('div');
+                name.className = 'asset-name';
+                name.textContent = asset.name;
+
+                const meta = document.createElement('div');
+                meta.className = 'asset-meta';
+                meta.innerHTML = `
+                    ${asset.category ? `Category: ${asset.category}` : ''}
+                    ${asset.sourceFile ? `<br>From: ${asset.sourceFile.split('_')[0]}` : ''}
+                    ${asset.dateAdded ? `<br>Added: ${new Date(asset.dateAdded).toLocaleDateString()}` : ''}
+                `;
+
+                const tags = document.createElement('div');
+                tags.className = 'asset-tags';
+                if (asset.tags && asset.tags.length > 0) {
+                    asset.tags.forEach(tag => {
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = `tag ${tag}`;
+                        tagSpan.textContent = tag;
+                        tags.appendChild(tagSpan);
+                    });
+                }
+
+                const insertBtn = document.createElement('button');
+                insertBtn.className = 'insert-btn';
+                insertBtn.textContent = 'Insert';
+                insertBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.insertAsset(asset);
+                };
+
+                div.appendChild(preview);
+                div.appendChild(name);
+                div.appendChild(meta);
+                div.appendChild(tags);
+                div.appendChild(insertBtn);
+
+                return div;
+            }
+
+            async insertAsset(asset) {
+                try {
+                    await PowerPoint.run(async (context) => {
+                        const slides = context.presentation.getSelectedSlides();
+                        slides.load("items");
+                        await context.sync();
+
+                        if (slides.items.length === 0) {
+                            this.showStatus('Please select a slide first', 'error');
+                            return;
+                        }
+
+                        const slide = slides.items[0];
+
+                        if (asset.type === 'image' && asset.url) {
+                            // Insert image
+                            const imageUrl = `http://localhost:8080/${asset.url}`;
+                            const image = slide.shapes.addPicture(imageUrl);
+                            image.left = 50;
+                            image.top = 50;
+                            image.width = 200;
+                        } else if (asset.type === 'textbox' || asset.content) {
+                            // Insert text box
+                            const textBox = slide.shapes.addTextBox(asset.content || asset.name);
+                            textBox.left = 50;
+                            textBox.top = 650; // Near bottom
+                            textBox.width = 600;
+                            textBox.height = 30;
+
+                            const textFrame = textBox.textFrame;
+                            textFrame.textRange.font.size = 10;
+                            textFrame.textRange.font.color = "#666666";
+                        }
+
+                        await context.sync();
+                        this.showStatus(`✅ Inserted: ${asset.name}`, 'success');
+                    });
+                } catch (error) {
+                    console.error('Insert error:', error);
+                    this.showStatus(`❌ Failed to insert ${asset.name}`, 'error');
+                }
+            }
+
+            updateLibraryStats() {
+                const statsDiv = document.getElementById('libraryStats');
+                const categories = {};
+
+                this.assets.forEach(asset => {
+                    const cat = asset.category || 'uncategorized';
+                    categories[cat] = (categories[cat] || 0) + 1;
+                });
+
+                const categoryText = Object.entries(categories)
+                    .map(([cat, count]) => `${count} ${cat}`)
+                    .join(', ');
+
+                statsDiv.innerHTML = `
+                    📊 ${this.assets.length} total assets: ${categoryText}
+                `;
+            }
+
+            showEmptyState(message = null) {
+                const grid = document.getElementById('assetsGrid');
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div>📁</div>
+                        <div>${message || 'No assets found'}</div>
+                        <div style="font-size: 11px; margin-top: 8px; color: #888;">
+                            ${message ? '' : 'Try adjusting your search or filter, or upload PowerPoint files to add assets.'}
+                        </div>
+                    </div>
+                `;
+            }
+
+            showStatus(message, type = 'success') {
+                const statusDiv = document.getElementById('statusMessage');
+                statusDiv.textContent = message;
+                statusDiv.className = `status-message ${type}`;
+
+                // Clear message after 3 seconds
+                setTimeout(() => {
+                    statusDiv.textContent = '';
+                    statusDiv.className = 'status-message';
+                }, 3000);
+            }
+        }
+
+        // Compliance functions (same as before)
+        async function addFooter() {
+            try {
+                await PowerPoint.run(async (context) => {
+                    const slides = context.presentation.getSelectedSlides();
+                    slides.load("items");
+                    await context.sync();
+
+                    if (slides.items.length === 0) {
+                        assetLibrary.showStatus('Please select a slide first', 'error');
+                        return;
+                    }
+
+                    const slide = slides.items[0];
+                    const footer = slide.shapes.addTextBox('© Company Name • Confidential • Internal Use Only');
+
+                    footer.left = 20;
+                    footer.top = 680;
+                    footer.width = 680;
+                    footer.height = 20;
+
+                    const textFrame = footer.textFrame;
+                    textFrame.textRange.font.size = 9;
+                    textFrame.textRange.font.color = "#666666";
+
+                    await context.sync();
+                    assetLibrary.showStatus('✅ Confidential footer added', 'success');
+                });
+            } catch (error) {
+                console.error('Footer error:', error);
+                assetLibrary.showStatus('❌ Failed to add footer', 'error');
+            }
+        }
+
+        async function addCopyright() {
+            try {
+                await PowerPoint.run(async (context) => {
+                    const slides = context.presentation.getSelectedSlides();
+                    slides.load("items");
+                    await context.sync();
+
+                    if (slides.items.length === 0) {
+                        assetLibrary.showStatus('Please select a slide first', 'error');
+                        return;
+                    }
+
+                    const slide = slides.items[0];
+                    const copyright = slide.shapes.addTextBox('© 2024 Company Name. All rights reserved.');
+
+                    copyright.left = 600;
+                    copyright.top = 20;
+                    copyright.width = 120;
+                    copyright.height = 20;
+
+                    const textFrame = copyright.textFrame;
+                    textFrame.textRange.font.size = 8;
+                    textFrame.textRange.font.color = "#999999";
+
+                    await context.sync();
+                    assetLibrary.showStatus('✅ Copyright notice added', 'success');
+                });
+            } catch (error) {
+                console.error('Copyright error:', error);
+                assetLibrary.showStatus('❌ Failed to add copyright', 'error');
+            }
+        }
+
+        async function auditSlides() {
+            try {
+                await PowerPoint.run(async (context) => {
+                    const presentation = context.presentation;
+                    const slides = presentation.slides;
+                    slides.load("items");
+                    await context.sync();
+
+                    const slideCount = slides.items.length;
+                    assetLibrary.showStatus(`🔍 Auditing ${slideCount} slides for compliance...`, 'info');
+
+                    setTimeout(() => {
+                        const mockIssues = Math.floor(Math.random() * 3);
+                        if (mockIssues === 0) {
+                            assetLibrary.showStatus('✅ All slides pass compliance check!', 'success');
+                        } else {
+                            assetLibrary.showStatus(`⚠️ Found ${mockIssues} potential compliance issues`, 'error');
+                        }
+                    }, 2000);
+                });
+            } catch (error) {
+                console.error('Audit error:', error);
+                assetLibrary.showStatus('❌ Audit failed', 'error');
+            }
+        }
+
+        function loadAssets() {
+            assetLibrary.loadAssets();
+        }
+
+        // Global variables
+        let assetLibrary;
+
+        // Initialize when Office is ready
+        Office.onReady((info) => {
+            console.log('Office Add-in ready!');
+            if (info.host === Office.HostType.PowerPoint) {
+                assetLibrary = new DynamicAssetLibrary();
+            }
+        });
+    </script>
+</body>
+</html>

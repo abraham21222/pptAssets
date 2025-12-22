@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Asset Library</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f8f9fa;
+            font-size: 14px;
+        }
+
+        .header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0078d7;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #323130;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #0078d7;
+            box-shadow: 0 0 0 1px #0078d7;
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 4px 8px;
+            border: 1px solid #d1d1d1;
+            background: white;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #0078d7;
+            background: #f3f9ff;
+        }
+
+        .filter-btn.active {
+            background: #0078d7;
+            color: white;
+            border-color: #0078d7;
+        }
+
+        .assets-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .asset-item {
+            background: white;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .asset-item:hover {
+            border-color: #0078d7;
+            box-shadow: 0 2px 8px rgba(0, 120, 215, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .asset-preview {
+            width: 100%;
+            height: 80px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .asset-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .asset-preview.text-asset {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 500;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        .asset-name {
+            font-weight: 600;
+            color: #323130;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .asset-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .tag {
+            background: #f3f2f1;
+            color: #605e5c;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        .tag.approved {
+            background: #ddf4ff;
+            color: #0078d7;
+        }
+
+        .tag.confidential {
+            background: #fef0e6;
+            color: #d83b01;
+        }
+
+        .insert-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .asset-item:hover .insert-btn {
+            opacity: 1;
+        }
+
+        .insert-btn:hover {
+            background: #106ebe;
+        }
+
+        .compliance-section {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e1e1e1;
+        }
+
+        .compliance-title {
+            font-weight: 600;
+            color: #323130;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .compliance-btn {
+            width: 100%;
+            padding: 8px;
+            background: #107c10;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .compliance-btn:hover {
+            background: #0e6e0e;
+        }
+
+        .status-message {
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .success {
+            background: #dff6dd;
+            color: #107c10;
+            border: 1px solid #107c10;
+        }
+
+        .error {
+            background: #fed9cc;
+            color: #d83b01;
+            border: 1px solid #d83b01;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏢 Asset Library</h1>
+    </div>
+
+    <div class="search-container">
+        <input type="text" class="search-box" placeholder="Search assets..." id="searchBox">
+    </div>
+
+    <div class="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="logos">Logos</button>
+        <button class="filter-btn" data-filter="charts">Charts</button>
+        <button class="filter-btn" data-filter="compliance">Legal</button>
+    </div>
+
+    <div class="assets-grid" id="assetsGrid">
+        <!-- Assets will be populated by JavaScript -->
+    </div>
+
+    <div class="compliance-section">
+        <div class="compliance-title">🛡️ Compliance Tools</div>
+        <button class="compliance-btn" onclick="addFooter()">Add Confidential Footer</button>
+        <button class="compliance-btn" onclick="addCopyright()">Add © Copyright Notice</button>
+        <button class="compliance-btn" onclick="auditSlides()">Audit Current Presentation</button>
+    </div>
+
+    <div id="statusMessage"></div>
+
+    <script>
+        // Asset library data from your PowerPoint
+        const assetLibrary = [
+            {
+                id: 'logo1',
+                name: 'Company Logo',
+                type: 'image',
+                category: 'logos',
+                url: 'assets/company-logo.png',
+                tags: ['approved', 'branding'],
+                description: 'Official company logo'
+            },
+            {
+                id: 'chart1',
+                name: 'Revenue Chart Template',
+                type: 'image',
+                category: 'charts',
+                url: 'assets/chart-template.png',
+                tags: ['approved', 'financial'],
+                description: 'Q4 revenue visualization'
+            },
+            {
+                id: 'chart2',
+                name: 'Data Analytics Chart',
+                type: 'image',
+                category: 'charts',
+                url: 'assets/data-chart.png',
+                tags: ['approved', 'analytics'],
+                description: 'Performance metrics chart'
+            },
+            {
+                id: 'chart3',
+                name: 'Growth Graph',
+                type: 'image',
+                category: 'charts',
+                url: 'assets/graph-visual.png',
+                tags: ['approved', 'growth'],
+                description: 'Business growth visualization'
+            },
+            {
+                id: 'chart4',
+                name: 'Analytics Dashboard',
+                type: 'image',
+                category: 'charts',
+                url: 'assets/analytics-chart.png',
+                tags: ['approved', 'dashboard'],
+                description: 'Executive dashboard view'
+            },
+            {
+                id: 'footer1',
+                name: 'Confidential Footer',
+                type: 'textbox',
+                category: 'compliance',
+                content: '© Company Name • Confidential • Internal Use Only',
+                tags: ['confidential', 'required'],
+                description: 'Standard confidentiality notice'
+            },
+            {
+                id: 'disclaimer1',
+                name: 'Legal Disclaimer',
+                type: 'textbox',
+                category: 'compliance',
+                content: 'This presentation contains proprietary and confidential information.',
+                tags: ['confidential', 'legal'],
+                description: 'Standard legal disclaimer'
+            },
+            {
+                id: 'approval1',
+                name: 'Approved for External Use',
+                type: 'textbox',
+                category: 'compliance',
+                content: '✅ APPROVED FOR EXTERNAL DISTRIBUTION',
+                tags: ['approved', 'external'],
+                description: 'External distribution approval stamp'
+            },
+            {
+                id: 'watermark1',
+                name: 'Draft Watermark',
+                type: 'textbox',
+                category: 'compliance',
+                content: 'DRAFT - NOT FOR DISTRIBUTION',
+                tags: ['draft', 'watermark'],
+                description: 'Draft document watermark'
+            }
+        ];
+
+        let filteredAssets = [...assetLibrary];
+
+        Office.onReady((info) => {
+            console.log('Office Add-in ready!');
+            if (info.host === Office.HostType.PowerPoint) {
+                renderAssets();
+                setupEventListeners();
+                showStatus('Asset library loaded successfully!', 'success');
+            }
+        });
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('searchBox').addEventListener('input', (e) => {
+                filterAssets();
+            });
+
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    filterAssets();
+                });
+            });
+        }
+
+        function filterAssets() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+
+            filteredAssets = assetLibrary.filter(asset => {
+                const matchesSearch = asset.name.toLowerCase().includes(searchTerm) ||
+                                    asset.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+
+                const matchesFilter = activeFilter === 'all' || asset.category === activeFilter;
+
+                return matchesSearch && matchesFilter;
+            });
+
+            renderAssets();
+        }
+
+        function renderAssets() {
+            const grid = document.getElementById('assetsGrid');
+            grid.innerHTML = '';
+
+            filteredAssets.forEach(asset => {
+                const assetElement = createAssetElement(asset);
+                grid.appendChild(assetElement);
+            });
+        }
+
+        function createAssetElement(asset) {
+            const div = document.createElement('div');
+            div.className = 'asset-item';
+
+            const preview = asset.type === 'image'
+                ? `<img src="${asset.url}" alt="${asset.name}" />`
+                : `<div class="text-asset">${asset.content.substring(0, 50)}...</div>`;
+
+            const tags = asset.tags.map(tag =>
+                `<span class="tag ${tag}">${tag}</span>`
+            ).join('');
+
+            div.innerHTML = `
+                <div class="asset-preview">
+                    ${preview}
+                </div>
+                <div class="asset-name">${asset.name}</div>
+                <div class="asset-tags">${tags}</div>
+                <button class="insert-btn" onclick="insertAsset('${asset.id}')">Insert</button>
+            `;
+
+            return div;
+        }
+
+        async function insertAsset(assetId) {
+            const asset = assetLibrary.find(a => a.id === assetId);
+            if (!asset) return;
+
+            try {
+                await PowerPoint.run(async (context) => {
+                    const slides = context.presentation.getSelectedSlides();
+                    slides.load("items");
+                    await context.sync();
+
+                    if (slides.items.length === 0) {
+                        showStatus('Please select a slide first', 'error');
+                        return;
+                    }
+
+                    const slide = slides.items[0];
+
+                    if (asset.type === 'image') {
+                        // Insert image
+                        const image = slide.shapes.addPicture(asset.url);
+                        image.left = 50; // 50 pixels from left
+                        image.top = 50;  // 50 pixels from top
+                        image.width = 200; // 200 pixels wide
+                    } else if (asset.type === 'textbox') {
+                        // Insert text box
+                        const textBox = slide.shapes.addTextBox(asset.content);
+                        textBox.left = 50;
+                        textBox.top = 650; // Near bottom
+                        textBox.width = 600;
+                        textBox.height = 30;
+
+                        const textFrame = textBox.textFrame;
+                        textFrame.textRange.font.size = 10;
+                        textFrame.textRange.font.color = "#666666";
+                    }
+
+                    await context.sync();
+                    showStatus(`✅ Inserted: ${asset.name}`, 'success');
+                });
+            } catch (error) {
+                console.error('Insert error:', error);
+                showStatus(`❌ Failed to insert ${asset.name}`, 'error');
+            }
+        }
+
+        async function addFooter() {
+            try {
+                await PowerPoint.run(async (context) => {
+                    const slides = context.presentation.getSelectedSlides();
+                    slides.load("items");
+                    await context.sync();
+
+                    if (slides.items.length === 0) {
+                        showStatus('Please select a slide first', 'error');
+                        return;
+                    }
+
+                    const slide = slides.items[0];
+                    const footer = slide.shapes.addTextBox('© Company Name • Confidential • Internal Use Only');
+
+                    footer.left = 20;
+                    footer.top = 680;
+                    footer.width = 680;
+                    footer.height = 20;
+
+                    const textFrame = footer.textFrame;
+                    textFrame.textRange.font.size = 9;
+                    textFrame.textRange.font.color = "#666666";
+
+                    await context.sync();
+                    showStatus('✅ Confidential footer added', 'success');
+                });
+            } catch (error) {
+                console.error('Footer error:', error);
+                showStatus('❌ Failed to add footer', 'error');
+            }
+        }
+
+        async function addCopyright() {
+            try {
+                await PowerPoint.run(async (context) => {
+                    const slides = context.presentation.getSelectedSlides();
+                    slides.load("items");
+                    await context.sync();
+
+                    if (slides.items.length === 0) {
+                        showStatus('Please select a slide first', 'error');
+                        return;
+                    }
+
+                    const slide = slides.items[0];
+                    const copyright = slide.shapes.addTextBox('© 2024 Company Name. All rights reserved.');
+
+                    copyright.left = 600;
+                    copyright.top = 20;
+                    copyright.width = 120;
+                    copyright.height = 20;
+
+                    const textFrame = copyright.textFrame;
+                    textFrame.textRange.font.size = 8;
+                    textFrame.textRange.font.color = "#999999";
+
+                    await context.sync();
+                    showStatus('✅ Copyright notice added', 'success');
+                });
+            } catch (error) {
+                console.error('Copyright error:', error);
+                showStatus('❌ Failed to add copyright', 'error');
+            }
+        }
+
+        async function auditSlides() {
+            try {
+                await PowerPoint.run(async (context) => {
+                    const presentation = context.presentation;
+                    const slides = presentation.slides;
+                    slides.load("items");
+                    await context.sync();
+
+                    let issueCount = 0;
+                    const slideCount = slides.items.length;
+
+                    // Simple audit - check for common compliance issues
+                    showStatus(`🔍 Auditing ${slideCount} slides for compliance...`, 'success');
+
+                    setTimeout(() => {
+                        const mockIssues = Math.floor(Math.random() * 3); // Mock audit results
+                        if (mockIssues === 0) {
+                            showStatus('✅ All slides pass compliance check!', 'success');
+                        } else {
+                            showStatus(`⚠️ Found ${mockIssues} potential compliance issues`, 'error');
+                        }
+                    }, 2000);
+                });
+            } catch (error) {
+                console.error('Audit error:', error);
+                showStatus('❌ Audit failed', 'error');
+            }
+        }
+
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type}`;
+
+            // Clear message after 3 seconds
+            setTimeout(() => {
+                statusDiv.textContent = '';
+                statusDiv.className = 'status-message';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

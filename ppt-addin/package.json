@@ -1,0 +1,16 @@
+{
+  "name": "company-asset-library",
+  "version": "1.0.0",
+  "description": "PowerPoint add-in for inserting approved company assets",
+  "main": "web/taskpane.html",
+  "scripts": {
+    "start": "http-server web -p 3000 --cors",
+    "dev": "http-server web -p 3000 --cors -o"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
+  },
+  "keywords": ["powerpoint", "office-addin", "assets", "compliance"],
+  "author": "Your Company",
+  "license": "MIT"
+}
