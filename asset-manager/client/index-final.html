@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerPoint Asset Manager</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #e1e5e9;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            color: #1a1a1a;
+        }
+
+        .header p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #e1e5e9;
+            flex-shrink: 0;
+        }
+
+        .upload-form {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .file-input input[type="file"] {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .upload-btn {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .upload-btn:hover {
+            background: #0052a3;
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .status.success { background: #d1f2df; color: #0d7421; }
+        .status.error { background: #ffe6e6; color: #d8000c; }
+        .status.info { background: #e1f5fe; color: #01579b; }
+
+        .hidden { display: none; }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .asset-viewer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            margin: 0;
+        }
+
+        .asset-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e1e5e9;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .asset-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #1a1a1a;
+        }
+
+        .selection-count {
+            font-size: 14px;
+            color: #666;
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* HUGE SCROLLABLE ASSET LIST */
+        .asset-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+            margin: 0;
+            min-height: 400px;
+        }
+
+        .asset-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #f1f3f4;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+            gap: 15px;
+        }
+
+        .asset-item:hover {
+            background: #f8f9fa;
+        }
+
+        .asset-item.selected {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding-left: 16px;
+        }
+
+        .asset-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #d1d5db;
+            border-radius: 3px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        .asset-item.selected .asset-checkbox {
+            background: #1976d2;
+            border-color: #1976d2;
+            color: white;
+        }
+
+        .asset-preview {
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e1e5e9;
+            overflow: hidden;
+        }
+
+        .asset-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .asset-preview .icon {
+            font-size: 32px;
+        }
+
+        .asset-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .asset-name {
+            font-weight: 600;
+            font-size: 16px;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .asset-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .asset-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .slide-badge {
+            background: #f1f3f4;
+            color: #5f6368;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .category-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .category-branding { background: #fce4ec; color: #ad1457; }
+        .category-compliance { background: #fff3e0; color: #e65100; }
+        .category-media { background: #e8f5e8; color: #2e7d32; }
+        .category-graphics { background: #f3e5f5; color: #7b1fa2; }
+        .category-design { background: #e1f5fe; color: #0277bd; }
+        .category-content { background: #f5f5f5; color: #424242; }
+
+        /* ACTION BAR */
+        .action-bar {
+            background: white;
+            padding: 15px 20px;
+            border-top: 1px solid #e1e5e9;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .action-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .select-all-btn, .clear-btn {
+            background: #f8f9fa;
+            border: 1px solid #d1d5db;
+            color: #374151;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .select-all-btn:hover, .clear-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .save-btn {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .save-btn:hover {
+            background: #15803d;
+        }
+
+        .save-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* SEARCH AND FILTER */
+        .controls {
+            background: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e1e5e9;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PowerPoint Asset Manager</h1>
+            <p>Extract and manage assets from PowerPoint presentations</p>
+        </div>
+
+        <div class="upload-section">
+            <form id="uploadForm" class="upload-form">
+                <div class="file-input">
+                    <input type="file" id="pptFile" accept=".ppt,.pptx" required>
+                </div>
+                <button type="submit" class="upload-btn">Extract Assets</button>
+            </form>
+            <div id="status" class="status hidden"></div>
+        </div>
+
+        <div class="main-content">
+            <div id="assetViewer" class="asset-viewer hidden">
+                <div class="asset-header">
+                    <h2>Extracted Assets</h2>
+                    <span id="selectionCount" class="selection-count">0 selected</span>
+                </div>
+
+                <div class="controls">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search assets...">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">All Categories</option>
+                        <option value="branding">Branding</option>
+                        <option value="compliance">Compliance</option>
+                        <option value="media">Media</option>
+                        <option value="design">Design</option>
+                        <option value="content">Content</option>
+                        <option value="graphics">Graphics</option>
+                    </select>
+                </div>
+
+                <div id="assetList" class="asset-list">
+                    <!-- Assets will be populated here -->
+                </div>
+
+                <div class="action-bar">
+                    <div class="action-left">
+                        <button id="selectAllBtn" class="select-all-btn">Select All</button>
+                        <button id="clearBtn" class="clear-btn">Clear Selection</button>
+                    </div>
+                    <button id="saveBtn" class="save-btn" disabled>Save Selected Assets</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AssetManager {
+            constructor() {
+                this.extractedAssets = [];
+                this.selectedAssets = new Set();
+                this.filteredAssets = [];
+                this.init();
+            }
+
+            init() {
+                document.getElementById('uploadForm').addEventListener('submit', (e) => this.handleUpload(e));
+                document.getElementById('saveBtn').addEventListener('click', () => this.saveAssets());
+                document.getElementById('clearBtn').addEventListener('click', () => this.clearSelection());
+                document.getElementById('selectAllBtn').addEventListener('click', () => this.selectAll());
+                document.getElementById('searchInput').addEventListener('input', (e) => this.filterAssets());
+                document.getElementById('categoryFilter').addEventListener('change', (e) => this.filterAssets());
+            }
+
+            showStatus(message, type = 'info') {
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = message;
+                statusEl.className = `status ${type}`;
+                statusEl.classList.remove('hidden');
+            }
+
+            async handleUpload(e) {
+                e.preventDefault();
+
+                const file = document.getElementById('pptFile').files[0];
+                if (!file) return;
+
+                this.showStatus('Processing PowerPoint file...', 'info');
+
+                const formData = new FormData();
+                formData.append('powerpoint', file);
+
+                try {
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Upload failed');
+                    }
+
+                    this.extractedAssets = this.prepareAssets(result);
+                    this.filteredAssets = [...this.extractedAssets];
+                    this.showAssetViewer();
+                    this.showStatus(`Successfully extracted ${this.extractedAssets.length} assets!`, 'success');
+
+                } catch (error) {
+                    this.showStatus(`Error: ${error.message}`, 'error');
+                    console.error(error);
+                }
+            }
+
+            prepareAssets(result) {
+                const assets = [];
+
+                if (result.slides) {
+                    result.slides.forEach(slide => {
+                        // Add images
+                        if (slide.image_files) {
+                            slide.image_files.forEach((imageFile, i) => {
+                                assets.push({
+                                    id: `img_${slide.slide_number}_${i}`,
+                                    type: 'image',
+                                    name: imageFile.replace(/^slide_\\d+_/, ''),
+                                    content: `/images/${imageFile}`,
+                                    slideNumber: slide.slide_number,
+                                    category: 'media',
+                                    description: `Image extracted from slide ${slide.slide_number}. File: ${imageFile}`
+                                });
+                            });
+                        }
+
+                        // Add brand/logo elements
+                        if (slide.logos_and_brands) {
+                            slide.logos_and_brands.forEach((logo, i) => {
+                                if (logo.type === 'text_logo') {
+                                    assets.push({
+                                        id: `logo_text_${slide.slide_number}_${i}`,
+                                        type: 'logo_text',
+                                        name: 'Brand/Logo Text',
+                                        content: logo.content,
+                                        slideNumber: slide.slide_number,
+                                        category: 'branding',
+                                        description: `Brand text element: "${logo.content}". This is likely a company name, logo text, or brand identifier.`
+                                    });
+                                } else if (logo.type === 'image_logo') {
+                                    assets.push({
+                                        id: `logo_img_${slide.slide_number}_${i}`,
+                                        type: 'logo_image',
+                                        name: 'Brand/Logo Image',
+                                        content: `/images/${logo.file}`,
+                                        slideNumber: slide.slide_number,
+                                        category: 'branding',
+                                        description: `Brand logo image from slide ${slide.slide_number}. This appears to be a company logo or brand image.`
+                                    });
+                                }
+                            });
+                        }
+
+                        // Add formatted text shapes
+                        if (slide.text_shapes) {
+                            slide.text_shapes.forEach((textShape, i) => {
+                                assets.push({
+                                    id: `text_shape_${slide.slide_number}_${i}`,
+                                    type: 'formatted_text',
+                                    name: 'Formatted Text Element',
+                                    content: textShape.text,
+                                    slideNumber: slide.slide_number,
+                                    category: 'design',
+                                    description: `Styled text element: "${textShape.text.substring(0, 100)}${textShape.text.length > 100 ? '...' : ''}". Contains formatting and design properties.`
+                                });
+                            });
+                        }
+
+                        // Add regular text content
+                        if (slide.text_content) {
+                            slide.text_content.forEach((text, i) => {
+                                if (!text || text.trim().length < 5) return;
+
+                                let category = 'content';
+                                let name = 'Text Content';
+
+                                const textLower = text.toLowerCase();
+                                if (textLower.includes('confidential') || textLower.includes('proprietary') || textLower.includes('internal')) {
+                                    category = 'compliance';
+                                    name = 'Confidentiality Notice';
+                                } else if (textLower.includes('copyright') || textLower.includes('©') || textLower.includes('trademark')) {
+                                    category = 'compliance';
+                                    name = 'Copyright/Trademark Notice';
+                                } else if (slide.title && text === slide.title) {
+                                    name = 'Slide Title';
+                                } else if (text.length < 30) {
+                                    category = 'content';
+                                    name = 'Short Text/Label';
+                                }
+
+                                assets.push({
+                                    id: `text_${slide.slide_number}_${i}`,
+                                    type: 'text',
+                                    name: name,
+                                    content: text,
+                                    slideNumber: slide.slide_number,
+                                    category: category,
+                                    description: `Text content (${text.length} characters): "${text.substring(0, 100)}${text.length > 100 ? '...' : ''}"`
+                                });
+                            });
+                        }
+
+                        // Add graphic elements
+                        if (slide.graphic_elements) {
+                            slide.graphic_elements.forEach((element, i) => {
+                                assets.push({
+                                    id: `graphic_${slide.slide_number}_${i}`,
+                                    type: 'graphic',
+                                    name: 'Graphic Element',
+                                    content: element.text || 'Graphic shape or drawing',
+                                    slideNumber: slide.slide_number,
+                                    category: 'graphics',
+                                    description: element.text ? `Graphic shape with text: "${element.text}"` : 'Graphic shape, drawing, or visual element without text content.'
+                                });
+                            });
+                        }
+                    });
+                }
+
+                return assets.sort((a, b) => {
+                    const catOrder = { branding: 1, compliance: 2, media: 3, design: 4, graphics: 5, content: 6 };
+                    if (a.category !== b.category) {
+                        return (catOrder[a.category] || 7) - (catOrder[b.category] || 7);
+                    }
+                    return a.slideNumber - b.slideNumber;
+                });
+            }
+
+            showAssetViewer() {
+                document.getElementById('assetViewer').classList.remove('hidden');
+                this.renderAssets();
+                this.updateSelectionCount();
+            }
+
+            filterAssets() {
+                const search = document.getElementById('searchInput').value.toLowerCase();
+                const category = document.getElementById('categoryFilter').value;
+
+                this.filteredAssets = this.extractedAssets.filter(asset => {
+                    const matchesSearch = !search ||
+                        asset.name.toLowerCase().includes(search) ||
+                        asset.content.toLowerCase().includes(search) ||
+                        asset.description.toLowerCase().includes(search);
+
+                    const matchesCategory = !category || asset.category === category;
+
+                    return matchesSearch && matchesCategory;
+                });
+
+                this.renderAssets();
+            }
+
+            renderAssets() {
+                const list = document.getElementById('assetList');
+                list.innerHTML = '';
+
+                this.filteredAssets.forEach(asset => {
+                    const item = document.createElement('div');
+                    item.className = 'asset-item';
+                    item.dataset.assetId = asset.id;
+
+                    if (this.selectedAssets.has(asset.id)) {
+                        item.classList.add('selected');
+                    }
+
+                    const preview = this.createPreview(asset);
+
+                    item.innerHTML = `
+                        <div class="asset-checkbox">${this.selectedAssets.has(asset.id) ? '✓' : ''}</div>
+                        ${preview}
+                        <div class="asset-info">
+                            <div class="asset-name">${asset.name}</div>
+                            <div class="asset-description">${asset.description}</div>
+                            <div class="asset-meta">
+                                <span class="slide-badge">Slide ${asset.slideNumber}</span>
+                                <span class="category-badge category-${asset.category}">${asset.category}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    item.addEventListener('click', () => this.toggleSelection(asset.id, item));
+                    list.appendChild(item);
+                });
+
+                // Update selection count after filtering
+                this.updateSelectionCount();
+            }
+
+            createPreview(asset) {
+                if (asset.type === 'image' || asset.type === 'logo_image') {
+                    return `<div class="asset-preview"><img src="${asset.content}" alt="${asset.name}" onerror="this.parentElement.innerHTML='<span class=\\"icon\\">🖼️</span>'"></div>`;
+                } else {
+                    const icon = asset.category === 'branding' ? '🏢' :
+                               asset.category === 'compliance' ? '⚖️' :
+                               asset.category === 'design' ? '🎨' :
+                               asset.category === 'graphics' ? '🔷' :
+                               asset.category === 'media' ? '🖼️' : '📄';
+                    return `<div class="asset-preview"><span class="icon">${icon}</span></div>`;
+                }
+            }
+
+            toggleSelection(assetId, itemEl) {
+                if (this.selectedAssets.has(assetId)) {
+                    this.selectedAssets.delete(assetId);
+                    itemEl.classList.remove('selected');
+                    itemEl.querySelector('.asset-checkbox').textContent = '';
+                } else {
+                    this.selectedAssets.add(assetId);
+                    itemEl.classList.add('selected');
+                    itemEl.querySelector('.asset-checkbox').textContent = '✓';
+                }
+                this.updateSelectionCount();
+            }
+
+            selectAll() {
+                this.filteredAssets.forEach(asset => {
+                    this.selectedAssets.add(asset.id);
+                });
+                this.renderAssets();
+            }
+
+            clearSelection() {
+                this.selectedAssets.clear();
+                this.renderAssets();
+            }
+
+            updateSelectionCount() {
+                const count = this.selectedAssets.size;
+                document.getElementById('selectionCount').textContent = `${count} selected`;
+                document.getElementById('saveBtn').disabled = count === 0;
+            }
+
+            async saveAssets() {
+                if (this.selectedAssets.size === 0) return;
+
+                const selectedAssetData = this.extractedAssets.filter(asset =>
+                    this.selectedAssets.has(asset.id)
+                );
+
+                try {
+                    this.showStatus('Saving selected assets...', 'info');
+
+                    const response = await fetch('/api/save-assets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ assets: selectedAssetData })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Save failed');
+                    }
+
+                    this.showStatus(`Successfully saved ${selectedAssetData.length} assets to your library!`, 'success');
+                    this.clearSelection();
+
+                } catch (error) {
+                    this.showStatus(`Save error: ${error.message}`, 'error');
+                    console.error(error);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new AssetManager();
+        });
+    </script>
+</body>
+</html>

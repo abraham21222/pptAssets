@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerPoint Asset Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .upload-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .file-input {
+            margin: 20px 0;
+        }
+
+        .file-input input[type="file"] {
+            padding: 10px;
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .upload-btn {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .upload-btn:hover {
+            background: #005a87;
+        }
+
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+        .hidden { display: none; }
+
+        /* Asset Viewer */
+        .asset-viewer {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .asset-header {
+            background: #007cba;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .asset-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        /* Simple List View */
+        .asset-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .asset-item:hover {
+            background: #f8f9fa;
+        }
+
+        .asset-item.selected {
+            background: #e3f2fd;
+            border-left: 4px solid #007cba;
+        }
+
+        .asset-preview {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .asset-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .asset-preview .icon {
+            font-size: 24px;
+        }
+
+        .asset-info {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .asset-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .asset-meta {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .asset-category {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .category-branding { background: #ffebee; color: #c62828; }
+        .category-compliance { background: #fff3e0; color: #ef6c00; }
+        .category-media { background: #e8f5e8; color: #2e7d32; }
+        .category-graphics { background: #f3e5f5; color: #7b1fa2; }
+        .category-design { background: #e1f5fe; color: #0277bd; }
+        .category-content { background: #f5f5f5; color: #424242; }
+
+        .action-bar {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .save-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .save-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PowerPoint Asset Manager</h1>
+            <p>Upload PowerPoint files and extract assets</p>
+        </div>
+
+        <div class="upload-section">
+            <h2>Upload PowerPoint File</h2>
+            <form id="uploadForm">
+                <div class="file-input">
+                    <input type="file" id="pptFile" accept=".ppt,.pptx" required>
+                </div>
+                <button type="submit" class="upload-btn">Extract Assets</button>
+            </form>
+            <div id="status" class="status hidden"></div>
+        </div>
+
+        <div id="assetViewer" class="asset-viewer hidden">
+            <div class="asset-header">
+                <h2>Extracted Assets</h2>
+                <span id="selectionCount">0 selected</span>
+            </div>
+
+            <div id="assetList" class="asset-list">
+                <!-- Assets will be populated here -->
+            </div>
+
+            <div class="action-bar">
+                <button id="clearBtn" class="clear-btn">Clear Selection</button>
+                <button id="saveBtn" class="save-btn" disabled>Save Selected Assets</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SimpleAssetManager {
+            constructor() {
+                this.extractedAssets = [];
+                this.selectedAssets = new Set();
+                this.init();
+            }
+
+            init() {
+                document.getElementById('uploadForm').addEventListener('submit', (e) => this.handleUpload(e));
+                document.getElementById('saveBtn').addEventListener('click', () => this.saveAssets());
+                document.getElementById('clearBtn').addEventListener('click', () => this.clearSelection());
+            }
+
+            showStatus(message, type = 'info') {
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = message;
+                statusEl.className = `status ${type}`;
+                statusEl.classList.remove('hidden');
+            }
+
+            async handleUpload(e) {
+                e.preventDefault();
+
+                const file = document.getElementById('pptFile').files[0];
+                if (!file) return;
+
+                this.showStatus('Processing...', 'info');
+
+                const formData = new FormData();
+                formData.append('powerpoint', file);
+
+                try {
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Upload failed');
+                    }
+
+                    this.extractedAssets = this.prepareAssets(result);
+                    this.showAssetViewer();
+                    this.showStatus(`Extracted ${this.extractedAssets.length} assets!`, 'success');
+
+                } catch (error) {
+                    this.showStatus(`Error: ${error.message}`, 'error');
+                    console.error(error);
+                }
+            }
+
+            prepareAssets(result) {
+                const assets = [];
+
+                if (result.slides) {
+                    result.slides.forEach(slide => {
+                        // Add images
+                        if (slide.image_files) {
+                            slide.image_files.forEach(imageFile => {
+                                assets.push({
+                                    id: `img_${slide.slide_number}_${imageFile}`,
+                                    type: 'image',
+                                    name: imageFile,
+                                    content: `/images/${imageFile}`,
+                                    slideNumber: slide.slide_number,
+                                    category: 'media',
+                                    description: `Image from slide ${slide.slide_number}`
+                                });
+                            });
+                        }
+
+                        // Add logos and brands
+                        if (slide.logos_and_brands) {
+                            slide.logos_and_brands.forEach((logo, i) => {
+                                if (logo.type === 'text_logo') {
+                                    assets.push({
+                                        id: `logo_text_${slide.slide_number}_${i}`,
+                                        type: 'logo_text',
+                                        name: 'Brand Text',
+                                        content: logo.content,
+                                        slideNumber: slide.slide_number,
+                                        category: 'branding',
+                                        description: `Logo text: "${logo.content}"`
+                                    });
+                                } else if (logo.type === 'image_logo') {
+                                    assets.push({
+                                        id: `logo_img_${slide.slide_number}_${i}`,
+                                        type: 'logo_image',
+                                        name: 'Brand Image',
+                                        content: `/images/${logo.file}`,
+                                        slideNumber: slide.slide_number,
+                                        category: 'branding',
+                                        description: `Logo image from slide ${slide.slide_number}`
+                                    });
+                                }
+                            });
+                        }
+
+                        // Add formatted text shapes
+                        if (slide.text_shapes) {
+                            slide.text_shapes.forEach((textShape, i) => {
+                                assets.push({
+                                    id: `text_shape_${slide.slide_number}_${i}`,
+                                    type: 'formatted_text',
+                                    name: 'Formatted Text',
+                                    content: textShape.text,
+                                    slideNumber: slide.slide_number,
+                                    category: 'design',
+                                    description: `Formatted text: "${textShape.text.substring(0, 50)}..."`
+                                });
+                            });
+                        }
+
+                        // Add text content
+                        if (slide.text_content) {
+                            slide.text_content.forEach((text, i) => {
+                                if (!text || text.trim().length < 5) return;
+
+                                let category = 'content';
+                                let name = 'Text Content';
+
+                                const textLower = text.toLowerCase();
+                                if (textLower.includes('confidential') || textLower.includes('proprietary')) {
+                                    category = 'compliance';
+                                    name = 'Compliance Text';
+                                } else if (textLower.includes('copyright') || textLower.includes('©')) {
+                                    category = 'compliance';
+                                    name = 'Copyright Notice';
+                                }
+
+                                assets.push({
+                                    id: `text_${slide.slide_number}_${i}`,
+                                    type: 'text',
+                                    name: name,
+                                    content: text,
+                                    slideNumber: slide.slide_number,
+                                    category: category,
+                                    description: `Text (${text.length} chars) from slide ${slide.slide_number}`
+                                });
+                            });
+                        }
+                    });
+                }
+
+                return assets;
+            }
+
+            showAssetViewer() {
+                document.getElementById('assetViewer').classList.remove('hidden');
+                this.renderAssets();
+            }
+
+            renderAssets() {
+                const list = document.getElementById('assetList');
+                list.innerHTML = '';
+
+                this.extractedAssets.forEach(asset => {
+                    const item = document.createElement('div');
+                    item.className = 'asset-item';
+                    item.dataset.assetId = asset.id;
+
+                    const preview = this.createPreview(asset);
+
+                    item.innerHTML = `
+                        ${preview}
+                        <div class="asset-info">
+                            <div class="asset-name">${asset.name}</div>
+                            <div class="asset-meta">Slide ${asset.slideNumber} • ${asset.description}</div>
+                            <span class="asset-category category-${asset.category}">${asset.category}</span>
+                        </div>
+                    `;
+
+                    item.addEventListener('click', () => this.toggleSelection(asset.id, item));
+                    list.appendChild(item);
+                });
+            }
+
+            createPreview(asset) {
+                if (asset.type === 'image' || asset.type === 'logo_image') {
+                    return `<div class="asset-preview"><img src="${asset.content}" alt="${asset.name}" onerror="this.parentElement.innerHTML='<span class=\\"icon\\">🖼️</span>'"></div>`;
+                } else {
+                    const icon = asset.category === 'branding' ? '🏢' :
+                               asset.category === 'compliance' ? '⚖️' :
+                               asset.category === 'design' ? '🎨' : '📄';
+                    return `<div class="asset-preview"><span class="icon">${icon}</span></div>`;
+                }
+            }
+
+            toggleSelection(assetId, itemEl) {
+                if (this.selectedAssets.has(assetId)) {
+                    this.selectedAssets.delete(assetId);
+                    itemEl.classList.remove('selected');
+                } else {
+                    this.selectedAssets.add(assetId);
+                    itemEl.classList.add('selected');
+                }
+                this.updateSelectionCount();
+            }
+
+            updateSelectionCount() {
+                document.getElementById('selectionCount').textContent = `${this.selectedAssets.size} selected`;
+                document.getElementById('saveBtn').disabled = this.selectedAssets.size === 0;
+            }
+
+            clearSelection() {
+                this.selectedAssets.clear();
+                document.querySelectorAll('.asset-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                this.updateSelectionCount();
+            }
+
+            async saveAssets() {
+                if (this.selectedAssets.size === 0) return;
+
+                const selectedAssetData = this.extractedAssets.filter(asset =>
+                    this.selectedAssets.has(asset.id)
+                );
+
+                try {
+                    this.showStatus('Saving...', 'info');
+
+                    const response = await fetch('/api/save-assets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ assets: selectedAssetData })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Save failed');
+                    }
+
+                    this.showStatus(`Saved ${selectedAssetData.length} assets!`, 'success');
+                    this.clearSelection();
+
+                } catch (error) {
+                    this.showStatus(`Save error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new SimpleAssetManager();
+        });
+    </script>
+</body>
+</html>

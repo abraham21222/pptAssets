@@ -18,6 +18,11 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/extracted', express.static(path.join(__dirname, '../extracted')));
 app.use('/', express.static(path.join(__dirname, '../client')));
 
+// Serve the final, properly designed interface
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index-final.html'));
+});
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
