@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "id": "asset_1766462941677_fcscgaarv",
+    "name": "our mission",
+    "type": "textbox",
+    "category": "text",
+    "tags": [
+      "approved"
+    ],
+    "sourceFile": "The Giving Garden_1766462845919.pptx",
+    "slideNumber": 2,
+    "dateAdded": "2025-12-23T04:09:01.677Z",
+    "content": "Our Mission\nOur History\nWhat our job is \nHow you can help\nHow you can benefit\nHow our community can benefit",
+    "lastModified": "2025-12-23T04:09:09.897Z"
+  },
+  {
+    "id": "asset_1766463015677_xkqkui8x2",
+    "name": "The Giving Garden -",
+    "type": "textbox",
+    "category": "text",
+    "tags": [
+      "approved"
+    ],
+    "sourceFile": "The Giving Garden_1766463006239.pptx",
+    "slideNumber": 3,
+    "dateAdded": "2025-12-23T04:10:15.677Z",
+    "content": "The Giving Garden -  240 Bald Hill Road, Warwick RI, 02886"
+  }
+]

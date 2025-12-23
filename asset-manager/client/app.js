@@ -1,13 +1,19 @@
 // Asset Manager Web App
 class AssetManager {
     constructor() {
-        this.apiBase = 'http://localhost:3001/api';
+        const { origin } = window.location;
+        this.apiBase = `${origin}/api`;
         this.selectedAssets = new Set();
         this.currentFileId = null;
         this.extractedAssets = [];
+        this.slideSummaries = [];
+        this.activeSlideFilter = null;
+        this.activityLog = [];
 
         this.initializeEventListeners();
         this.loadLibrary();
+        this.renderActivityLog();
+        this.logActivity('Ready to extract PowerPoint assets.');
     }
 
     initializeEventListeners() {
@@ -59,6 +65,8 @@ class AssetManager {
             return;
         }
 
+        this.logActivity(`Uploading ${file.name} (${Math.round(file.size / 1024)} KB)…`, 'info');
+
         // Show progress
         this.showProgress(true);
         this.showStatus('Uploading and analyzing PowerPoint file...', 'info');
@@ -72,21 +80,31 @@ class AssetManager {
                 body: formData
             });
 
-            const result = await response.json();
-
-            if (result.success) {
-                this.currentFileId = result.data.fileId;
-                this.showStatus(`✅ Analyzed ${result.data.totalSlides} slides, found ${result.data.totalImages} images`, 'success');
-
-                // Load extracted assets
-                await this.loadExtractedAssets(this.currentFileId);
-            } else {
-                throw new Error(result.error || 'Upload failed');
+            const raw = await response.text();
+            let result;
+            try {
+                result = raw ? JSON.parse(raw) : {};
+            } catch (parseError) {
+                console.error('Upload response parse error:', raw);
+                throw new Error('Server returned an unexpected response');
             }
+
+            if (!response.ok || !result.success) {
+                const details = result?.details || result?.error || 'Upload failed';
+                throw new Error(details);
+            }
+
+            this.currentFileId = result.data.fileId;
+            this.showStatus(`✅ Analyzed ${result.data.totalSlides} slides, found ${result.data.totalImages} images`, 'success');
+            this.logActivity(`Analysis complete: ${result.data.totalSlides} slides, ${result.data.totalImages} images detected.`, 'success');
+
+            // Load extracted assets
+            await this.loadExtractedAssets(this.currentFileId);
 
         } catch (error) {
             console.error('Upload error:', error);
             this.showStatus(`❌ Failed to process file: ${error.message}`, 'error');
+            this.logActivity(`Upload failed: ${error.message}`, 'error');
         } finally {
             this.showProgress(false);
         }
@@ -98,8 +116,17 @@ class AssetManager {
             const result = await response.json();
 
             if (result.success) {
+                if (!result.analysisData || !result.analysisData.slides || !result.analysisData.slides.length) {
+                    console.warn('[AssetManager] No analysis data returned; only images will be available.');
+                } else {
+                    console.log('[AssetManager] Loaded analysis data for', result.analysisData.slides.length, 'slides');
+                }
                 this.extractedAssets = this.prepareAssetsForSelection(result);
+                this.slideSummaries = this.buildSlideSummaries(result, this.extractedAssets);
+                this.activeSlideFilter = null;
                 this.showAssetPreview();
+                this.logActivity(`Prepared ${this.extractedAssets.length} selectable assets.`, 'success');
+                console.log('[AssetManager] Slide summaries', this.slideSummaries);
             } else {
                 throw new Error(result.error);
             }
@@ -107,7 +134,53 @@ class AssetManager {
         } catch (error) {
             console.error('Error loading extracted assets:', error);
             this.showStatus(`Error loading extracted assets: ${error.message}`, 'error');
+            this.logActivity(`Failed to load extracted assets: ${error.message}`, 'error');
         }
+    }
+
+    buildSlideSummaries(result, assets = []) {
+        if (result.analysisData && result.analysisData.slides && result.analysisData.slides.length) {
+            return result.analysisData.slides.map(slide => ({
+                slideNumber: slide.slide_number,
+                title: slide.title || `Slide ${slide.slide_number}`,
+                tags: slide.tags || [],
+                textCount: slide.text_content ? slide.text_content.length : 0,
+                imageCount: slide.image_count || 0
+            })).sort((a, b) => a.slideNumber - b.slideNumber);
+        }
+
+        if (!assets.length) {
+            return [];
+        }
+
+        const grouped = new Map();
+        assets.forEach(asset => {
+            const slide = asset.slideNumber || 0;
+            if (!grouped.has(slide)) {
+                grouped.set(slide, {
+                    slideNumber: slide,
+                    title: `Slide ${slide}`,
+                    tags: [],
+                    textCount: 0,
+                    imageCount: 0
+                });
+            }
+            const entry = grouped.get(slide);
+            if (asset.type === 'image') {
+                entry.imageCount += 1;
+            } else {
+                entry.textCount += 1;
+            }
+            if (asset.tags && asset.tags.length) {
+                entry.tags.push(...asset.tags.slice(0, 2));
+            }
+            if (asset.name && entry.title === `Slide ${slide}`) {
+                entry.title = asset.name;
+            }
+        });
+        console.warn('[AssetManager] Building slide summaries from assets fallback. Grouped slides:', grouped.size);
+
+        return Array.from(grouped.values()).sort((a, b) => a.slideNumber - b.slideNumber);
     }
 
     prepareAssetsForSelection(result) {
@@ -160,7 +233,7 @@ class AssetManager {
                 }
 
                 // Add ALL text content with smart categorization
-                slide.text_content.forEach((text, index) => {
+                 (slide.text_content || []).forEach((text, index) => {
                     if (!text || text.trim().length < 3) return; // Skip empty/tiny text
 
                     const textLower = text.toLowerCase();
@@ -209,7 +282,7 @@ class AssetManager {
                 });
 
                 // Add slide-level summary asset
-                const totalTextItems = slide.text_content.length;
+                const totalTextItems = slide.text_content ? slide.text_content.length : 0;
                 const totalImages = slide.image_count;
                 if (totalTextItems > 0 || totalImages > 0) {
                     assets.push({
@@ -245,19 +318,24 @@ class AssetManager {
     showAssetPreview() {
         const previewDiv = document.getElementById('assetPreview');
         const gridDiv = document.getElementById('assetGrid');
+        const emptyState = document.getElementById('assetEmptyState');
 
         // Clear existing assets
         gridDiv.innerHTML = '';
         this.selectedAssets.clear();
 
-        // Populate assets
-        this.extractedAssets.forEach(asset => {
-            const assetElement = this.createAssetElement(asset);
-            gridDiv.appendChild(assetElement);
-        });
+        this.renderSlideNavigator();
+        this.renderAssetGrid();
 
         // Show preview section
-        previewDiv.style.display = 'block';
+        previewDiv.style.display = 'flex';
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+        const scrollRegion = document.querySelector('.asset-scroll');
+        if (scrollRegion) {
+            scrollRegion.scrollTop = 0;
+        }
         this.updateSelectionCount();
     }
 
@@ -270,9 +348,13 @@ class AssetManager {
         checkbox.type = 'checkbox';
         checkbox.className = 'checkbox';
         checkbox.addEventListener('change', () => this.toggleAssetSelection(asset.id));
+        checkbox.checked = this.selectedAssets.has(asset.id);
+        if (checkbox.checked) {
+            div.classList.add('selected');
+        }
 
         const preview = document.createElement('div');
-        preview.className = 'asset-preview';
+        preview.className = 'asset-card-preview';
 
         // Create different previews based on content type
         if (asset.type === 'image') {
@@ -380,6 +462,110 @@ class AssetManager {
         return div;
     }
 
+    renderAssetGrid() {
+        const gridDiv = document.getElementById('assetGrid');
+        if (!gridDiv) return;
+
+        gridDiv.innerHTML = '';
+        const assetsToRender = this.extractedAssets.filter(asset => {
+            if (!this.activeSlideFilter || this.activeSlideFilter === 'all') {
+                return true;
+            }
+            return asset.slideNumber === this.activeSlideFilter;
+        });
+
+        if (assetsToRender.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'asset-empty';
+            empty.textContent = 'No assets match this filter yet.';
+            gridDiv.appendChild(empty);
+            return;
+        }
+
+        assetsToRender.forEach(asset => {
+            const assetElement = this.createAssetElement(asset);
+            gridDiv.appendChild(assetElement);
+        });
+    }
+
+    renderSlideNavigator() {
+        const container = document.getElementById('slideNavigator');
+        const allButton = document.getElementById('allSlidesBtn');
+        if (!container) return;
+
+        container.innerHTML = '';
+        if (allButton) {
+            if (!this.activeSlideFilter || this.activeSlideFilter === 'all') {
+                allButton.classList.add('active');
+            } else {
+                allButton.classList.remove('active');
+            }
+        }
+
+        if (!this.slideSummaries.length) {
+            const placeholder = document.createElement('p');
+            placeholder.className = 'muted';
+            placeholder.textContent = 'Upload a deck to see per-slide context.';
+            container.appendChild(placeholder);
+            return;
+        }
+
+        this.slideSummaries.forEach(summary => {
+            const card = document.createElement('div');
+            card.className = 'slide-card';
+            if (this.activeSlideFilter === summary.slideNumber) {
+                card.classList.add('active');
+            }
+
+            const title = document.createElement('h4');
+            title.textContent = `Slide ${summary.slideNumber}`;
+
+            const subtitle = document.createElement('div');
+            subtitle.className = 'muted';
+            subtitle.textContent = summary.title;
+
+            const meta = document.createElement('div');
+            meta.className = 'slide-meta';
+            meta.innerHTML = `<span>📝 ${summary.textCount}</span><span>🖼️ ${summary.imageCount}</span>`;
+
+            const tags = document.createElement('div');
+            tags.className = 'slide-tags';
+            summary.tags.slice(0, 3).forEach(tag => {
+                const pill = document.createElement('span');
+                pill.className = 'tag';
+                pill.textContent = tag;
+                tags.appendChild(pill);
+            });
+
+            card.appendChild(title);
+            card.appendChild(subtitle);
+            card.appendChild(meta);
+            if (summary.tags.length) {
+                card.appendChild(tags);
+            }
+
+            card.addEventListener('click', () => this.setSlideFilter(summary.slideNumber));
+            container.appendChild(card);
+        });
+    }
+
+    setSlideFilter(slideNumber) {
+        if (slideNumber === 'all') {
+            this.activeSlideFilter = null;
+        } else if (this.activeSlideFilter === slideNumber) {
+            this.activeSlideFilter = null;
+        } else {
+            this.activeSlideFilter = slideNumber;
+        }
+
+        this.renderSlideNavigator();
+        this.renderAssetGrid();
+        this.updateSelectionCount();
+
+        const label = this.activeSlideFilter ? `Slide ${this.activeSlideFilter}` : 'all slides';
+        this.logActivity(`Filtering assets for ${label}.`, 'info');
+    }
+
     toggleAssetSelection(assetId) {
         const element = document.querySelector(`[data-asset-id="${assetId}"]`);
         const checkbox = element.querySelector('.checkbox');
@@ -403,6 +589,7 @@ class AssetManager {
     async saveSelectedAssets() {
         if (this.selectedAssets.size === 0) {
             this.showStatus('Please select at least one asset to save', 'error');
+            this.logActivity('Attempted to save without selecting assets.', 'error');
             return;
         }
 
@@ -437,6 +624,7 @@ class AssetManager {
 
             if (result.success) {
                 this.showStatus(`✅ Successfully saved ${result.savedAssets.length} assets to library!`, 'success');
+                this.logActivity(`Saved ${result.savedAssets.length} assets to the library.`, 'success');
                 this.cancelPreview();
                 this.loadLibrary(); // Refresh library
             } else {
@@ -446,6 +634,7 @@ class AssetManager {
         } catch (error) {
             console.error('Save error:', error);
             this.showStatus(`❌ Failed to save assets: ${error.message}`, 'error');
+            this.logActivity(`Saving assets failed: ${error.message}`, 'error');
         } finally {
             saveBtn.textContent = originalText;
         }
@@ -503,6 +692,7 @@ class AssetManager {
             if (result.success) {
                 this.displayLibrary(result.assets);
                 document.getElementById('libraryCount').textContent = `${result.count} assets in library`;
+                this.showStatus(`Library updated with ${result.count} assets`, 'success');
             } else {
                 throw new Error(result.error);
             }
@@ -510,6 +700,7 @@ class AssetManager {
         } catch (error) {
             console.error('Error loading library:', error);
             document.getElementById('libraryCount').textContent = 'Error loading library';
+            this.logActivity(`Failed to load library: ${error.message}`, 'error');
         }
     }
 
@@ -665,14 +856,75 @@ class AssetManager {
     }
 
     cancelPreview() {
-        document.getElementById('assetPreview').style.display = 'none';
+        const preview = document.getElementById('assetPreview');
+        const emptyState = document.getElementById('assetEmptyState');
+        const gridDiv = document.getElementById('assetGrid');
+
+        preview.style.display = 'none';
+        if (gridDiv) {
+            gridDiv.innerHTML = '';
+        }
+        if (emptyState) {
+            emptyState.style.display = 'flex';
+        }
         this.selectedAssets.clear();
         this.currentFileId = null;
+        this.logActivity('Cleared current extraction batch.', 'info');
     }
 
     refreshLibrary() {
         this.loadLibrary();
         this.showStatus('🔄 Library refreshed', 'info');
+        this.logActivity('Library refreshed.', 'info');
+    }
+
+    logActivity(message, type = 'info') {
+        const entry = {
+            message,
+            type,
+            time: new Date()
+        };
+        this.activityLog.unshift(entry);
+        if (this.activityLog.length > 50) {
+            this.activityLog.pop();
+        }
+        this.renderActivityLog();
+    }
+
+    renderActivityLog() {
+        const container = document.getElementById('activityEntries');
+        if (!container) return;
+
+        container.innerHTML = '';
+        if (this.activityLog.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'log-entry info';
+            empty.innerHTML = '<span class="log-time">--:--:--</span><span>No activity yet.</span>';
+            container.appendChild(empty);
+            return;
+        }
+
+        this.activityLog.forEach(entry => {
+            const div = document.createElement('div');
+            div.className = `log-entry ${entry.type}`;
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'log-time';
+            timeSpan.textContent = entry.time.toLocaleTimeString();
+
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = entry.message;
+
+            div.appendChild(timeSpan);
+            div.appendChild(messageSpan);
+            container.appendChild(div);
+        });
+    }
+
+    clearActivityLog() {
+        this.activityLog = [];
+        this.renderActivityLog();
+        this.logActivity('Activity log cleared.', 'info');
     }
 }
 
@@ -739,6 +991,15 @@ function selectByType(category) {
     } else {
         assetManager.showStatus(`No ${category} assets found`, 'info');
     }
+}
+
+function filterBySlide(slideNumber) {
+    const parsed = slideNumber === 'all' ? 'all' : Number(slideNumber);
+    assetManager.setSlideFilter(parsed);
+}
+
+function clearActivityLog() {
+    assetManager.clearActivityLog();
 }
 
 // Initialize app when page loads

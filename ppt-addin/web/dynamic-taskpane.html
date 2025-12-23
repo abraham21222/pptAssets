@@ -315,10 +315,18 @@
     <div id="statusMessage"></div>
 
     <script>
+        const API_PORT = 3005;
+        const API_BASE = `${window.location.protocol}//${window.location.hostname}:${API_PORT}/api`;
+        const SAMPLE_LIBRARY = [
+            { id: 'logo1', name: 'Company Logo', type: 'image', category: 'logos', url: 'assets/company-logo.png', tags: ['approved', 'branding'] },
+            { id: 'chart1', name: 'Revenue Chart Template', type: 'image', category: 'charts', url: 'assets/chart-template.png', tags: ['approved', 'financial'] },
+            { id: 'footer1', name: 'Confidential Footer', type: 'textbox', category: 'compliance', content: '© Company Name • Confidential • Internal Use Only', tags: ['confidential'] }
+        ];
+
         // Dynamic Asset Library
         class DynamicAssetLibrary {
             constructor() {
-                this.apiBase = 'http://localhost:3001/api';
+                this.apiBase = API_BASE;
                 this.assets = [];
                 this.filteredAssets = [];
                 this.categories = new Set();
@@ -355,8 +363,11 @@
 
                 } catch (error) {
                     console.error('Error loading assets:', error);
-                    this.showEmptyState(`Error loading assets: ${error.message}`);
-                    this.showStatus('Failed to load asset library', 'error');
+                    this.assets = SAMPLE_LIBRARY;
+                    this.setupFilters();
+                    this.filterAssets();
+                    this.updateLibraryStats();
+                    this.showStatus('Server unavailable. Showing sample assets.', 'error');
                 }
             }
 

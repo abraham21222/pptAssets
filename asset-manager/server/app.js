@@ -18,9 +18,9 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/extracted', express.static(path.join(__dirname, '../extracted')));
 app.use('/', express.static(path.join(__dirname, '../client')));
 
-// Serve the final, properly designed interface
+// Serve the refreshed interface
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index-final.html'));
+  res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
 // Configure multer for file uploads
@@ -169,13 +169,14 @@ app.get('/api/extracted/:fileId', async (req, res) => {
     let analysisData = null;
     try {
       const jsonFiles = await fs.readdir(extractDir);
-      const analysisFile = jsonFiles.find(file => file.endsWith('_analysis.json'));
+      const analysisFile = jsonFiles.find(file => file.includes('_analysis') && file.endsWith('.json'));
       if (analysisFile) {
         const data = await fs.readFile(path.join(extractDir, analysisFile), 'utf8');
         analysisData = JSON.parse(data);
+        console.log('Loaded analysis data from', analysisFile);
       }
     } catch {
-      console.log('No analysis data found');
+      console.log('No analysis data found for', fileId);
     }
 
     res.json({

@@ -45,6 +45,8 @@ Thumbs.db
 # Uploaded files and extracted data
 asset-manager/server/uploads/
 asset-manager/server/extracted/
+asset-manager/extracted/
+asset-manager/uploads/
 exports/
 images/
 

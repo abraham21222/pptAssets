@@ -154,24 +154,40 @@ class PowerPointInspector:
 
             # Collect text content
             if shape_analysis['text']:
-                text_content.append(shape_analysis['text'])
+                if isinstance(shape_analysis['text'], list):
+                    text_content.extend(shape_analysis['text'])
+                else:
+                    text_content.append(shape_analysis['text'])
 
             # Collect images
             if shape_analysis['image_file']:
-                image_files.append(shape_analysis['image_file'])
-                image_count += 1
+                if isinstance(shape_analysis['image_file'], list):
+                    image_files.extend(shape_analysis['image_file'])
+                    image_count += len(shape_analysis['image_file'])
+                else:
+                    image_files.append(shape_analysis['image_file'])
+                    image_count += 1
 
             # Collect text shapes (logos, titles, formatted text)
             if shape_analysis['text_shape']:
-                text_shapes.append(shape_analysis['text_shape'])
+                if isinstance(shape_analysis['text_shape'], list):
+                    text_shapes.extend(shape_analysis['text_shape'])
+                else:
+                    text_shapes.append(shape_analysis['text_shape'])
 
             # Collect graphic elements
             if shape_analysis['graphic_element']:
-                graphic_elements.append(shape_analysis['graphic_element'])
+                if isinstance(shape_analysis['graphic_element'], list):
+                    graphic_elements.extend(shape_analysis['graphic_element'])
+                else:
+                    graphic_elements.append(shape_analysis['graphic_element'])
 
             # Detect logos and brand elements
             if shape_analysis['logo_brand']:
-                logos_and_brands.append(shape_analysis['logo_brand'])
+                if isinstance(shape_analysis['logo_brand'], list):
+                    logos_and_brands.extend(shape_analysis['logo_brand'])
+                else:
+                    logos_and_brands.append(shape_analysis['logo_brand'])
 
         # Extract notes
         notes = None
